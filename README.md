@@ -6,7 +6,7 @@
 - The ***Duplicate*** action will allow the same copy action, but it will put the item inside your inventory instead of activating the ***Place*** feature. You can configure the mod to allow the placement of items onto the ground instead of your inventory. If placing items on the ground is enabled, you can also configure the minimum weight the item must be before placing it on the ground, or else it will go directly into your inventory.
 - These copy actions will make an **Exact** duplicate of an item. It will copy the item restrictions, enchants, blessings, custom name, creator, color, and much more!
 - With the properties file, you can configure some things in this mod.
-- Unfortunately, you cannot copy all items at once inside of a container. Such as a table of items.
+- Unfortunately, you cannot copy items inside of a container, locks on a container, inscriptions, or food CCFP/Affinity... yet.
 
 *Hints*
 - Select multiple items in your inventory and choose ***Duplicate*** to make copies of all of those items at once (provided you have the mind logic to queue the actions).
