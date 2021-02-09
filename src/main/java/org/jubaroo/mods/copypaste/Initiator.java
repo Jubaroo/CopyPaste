@@ -1,86 +1,47 @@
-package org.jubaroo.mods.copyitems;
+package org.jubaroo.mods.copypaste;
 
-import com.wurmonline.server.DbConnector;
-import com.wurmonline.server.FailedException;
-import com.wurmonline.server.Items;
-import com.wurmonline.server.NoSuchItemException;
-import com.wurmonline.server.behaviours.MethodsItems;
+import com.wurmonline.server.MiscConstants;
 import com.wurmonline.server.creatures.Creature;
 import com.wurmonline.server.items.Item;
-import com.wurmonline.server.items.ItemFactory;
-import com.wurmonline.server.items.ItemMealData;
-import com.wurmonline.server.items.NoSuchTemplateException;
-import com.wurmonline.server.utils.DbUtilities;
 import org.gotti.wurmunlimited.modloader.interfaces.Configurable;
 import org.gotti.wurmunlimited.modloader.interfaces.PreInitable;
 import org.gotti.wurmunlimited.modloader.interfaces.ServerStartedListener;
 import org.gotti.wurmunlimited.modloader.interfaces.WurmServerMod;
 import org.gotti.wurmunlimited.modsupport.actions.ModActions;
-import org.jubaroo.mods.copyitems.actions.CopyMenuProvider;
-import org.jubaroo.mods.copyitems.actions.CopyMultipleMenuProvider;
+import org.jubaroo.mods.copypaste.actions.CopyMenuProvider;
+import org.jubaroo.mods.copypaste.actions.copy.CopyTileDataAction;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class Initiator implements WurmServerMod, ServerStartedListener, Configurable, PreInitable {
-    private static Logger logger = Logger.getLogger(Initiator.class.getName());
-    public static boolean copyAction = true;
-    public static boolean copyPasteAction = true;
-    private static boolean copyMultipleAction = true;
-    public static boolean messageOnCopy = false;
+    public static final Logger logger = Logger.getLogger(Initiator.class.getName());
+    public static boolean messageOnCopy = true;
     public static boolean placeLargeItemsOnGround = false;
     public static double weightLimit = 150.0d;
-    private static int gmPower = 5;
-    private static boolean debug = false;
+    public static int gmPower = 5;
 
     @Override
     public void configure(Properties properties) {
-        Initiator.copyAction = Boolean.parseBoolean(properties.getProperty("copyAction", String.valueOf(Initiator.copyAction)));
-        Initiator.copyPasteAction = Boolean.parseBoolean(properties.getProperty("copyPasteAction", String.valueOf(Initiator.copyPasteAction)));
-        Initiator.copyMultipleAction = Boolean.parseBoolean(properties.getProperty("copyMultipleAction", String.valueOf(Initiator.copyMultipleAction)));
         Initiator.messageOnCopy = Boolean.parseBoolean(properties.getProperty("messageOnCopy", String.valueOf(Initiator.messageOnCopy)));
         Initiator.placeLargeItemsOnGround = Boolean.parseBoolean(properties.getProperty("placeItemsOnGround", String.valueOf(Initiator.placeLargeItemsOnGround)));
         Initiator.weightLimit = Double.parseDouble(properties.getProperty("weightLimit", String.valueOf(Initiator.weightLimit)));
         Initiator.gmPower = Integer.parseInt(properties.getProperty("gmPower", String.valueOf(Initiator.gmPower)));
-        Initiator.debug = Boolean.parseBoolean(properties.getProperty("debug", String.valueOf(Initiator.debug)));
         logger.log(Level.INFO, "========================== Copy Items Mod Settings =============================");
-        if (Initiator.debug) {
-            logger.log(Level.INFO, "Mod Logging: Enabled");
-        } else {
-            logger.log(Level.INFO, "Mod Logging: Disabled");
-        }
-        if (Initiator.copyAction) {
-            jDebug("Copy Actions: Enabled");
-        } else {
-            jDebug("Copy Actions: Disabled");
-        }
-        if (Initiator.copyPasteAction) {
-            jDebug("Copy & Paste Action: Enabled");
-        } else {
-            jDebug("Copy & Paste Action: Disabled");
-        }
-        if (Initiator.copyMultipleAction) {
-            jDebug("Copy Multiple Items Action: Enabled");
-        } else {
-            jDebug("Copy Multiple Items Action: Disabled");
-        }
+        logInfo(String.format("GM Power Required: %d", Initiator.gmPower));
         if (Initiator.messageOnCopy) {
-            jDebug("Message To GM On Copy: Enabled");
+            logInfo("Message To GM On Copy: Enabled");
         } else {
-            jDebug("Message To GM On Copy: Disabled");
+            logInfo("Message To GM On Copy: Disabled");
         }
         if (Initiator.placeLargeItemsOnGround) {
-            jDebug("Boats And Wagons Copied On Ground: Enabled");
+            logInfo("Large Items Placed On Ground: Enabled");
         } else {
-            jDebug("Boats And Wagons Copied On Ground: Disabled");
+            logInfo("Large Items Placed On Ground: Disabled");
         }
-        jDebug("Weight Limit To Copy Items On Ground: " + Initiator.weightLimit + " kilograms");
-        jDebug("GM Power Level To Copy Items: " + Initiator.gmPower);
+        logInfo(String.format("Weight Limit To Copy Items On Ground: %s kilograms", Initiator.weightLimit));
+        logInfo(String.format("GM Power Level To Copy Items: %d", Initiator.gmPower));
         logger.log(Level.INFO, "========================== Copy Items Mod Settings =============================");
     }
 
@@ -91,23 +52,30 @@ public class Initiator implements WurmServerMod, ServerStartedListener, Configur
 
     @Override
     public void onServerStarted() {
-        jDebug("onServerStarted called");
+        logInfo("onServerStarted called");
         try {
             ModActions.registerBehaviourProvider(new CopyMenuProvider());
-            if (copyMultipleAction) {
-                ModActions.registerBehaviourProvider(new CopyMultipleMenuProvider());
-            }
+            ModActions.registerAction(new CopyTileDataAction());
         } catch (IllegalArgumentException | ClassCastException e) {
             e.printStackTrace();
             logger.log(Level.SEVERE, "Error in onServerStarted()", e);
         }
-        jDebug("all onServerStarted completed");
+        logInfo("all onServerStarted completed");
     }
 
-    public static void jDebug(String msg) {
-        if (debug) {
+    public static void logException(String msg, Throwable e) {
+        if (logger != null)
+            logger.log(Level.SEVERE, msg, e);
+    }
+
+    public static void logWarning(String msg) {
+        if (logger != null)
+            logger.log(Level.WARNING, msg);
+    }
+
+    public static void logInfo(String msg) {
+        if (logger != null)
             logger.log(Level.INFO, msg);
-        }
     }
 
     public static String getRarityString(byte rarity) {
@@ -130,6 +98,42 @@ public class Initiator implements WurmServerMod, ServerStartedListener, Configur
                 !object.isInventory() && !object.isInventoryGroup() && !object.isTopParentPile() && !object.isBodyPart();
     }
 
+    public static void copyItemRestrictions(Item item, Item target) {
+        // Copy all item restrictions
+        item.setAuxData(target.getAuxData());
+        item.setData1(target.getData1());
+        item.setData2(target.getData2());
+        item.setExtra1(target.getExtra1());
+        item.setExtra2(target.getExtra2());
+        item.setWeight(target.getWeightGrams(), true);
+        item.setColor(target.getColor());
+        item.setColor2(target.getColor2());
+        item.setName(target.getName());
+        item.setDescription(target.getDescription());
+        item.setHasNoDecay(target.hasNoDecay());
+        item.setIsIndestructible(target.isIndestructible());
+        item.setIsNoPut(target.isNoPut());
+        item.setIsNoTake(target.isNoTake());
+        item.setIsNoMove(target.isNoMove());
+        item.setIsNoImprove(target.isNoImprove());
+        item.setIsNotLockable(target.isNotLockable());
+        item.setIsNoDrop(target.isNoDrop());
+        item.setIsNotPaintable(target.isNotPaintable());
+        item.setIsNotLockpickable(target.isNotLockpickable());
+        item.setIsNoDrag(target.isNoDrag());
+        item.setIsNoRepair(target.isNoRepair());
+        item.setIsNotRuneable(target.isNotRuneable());
+        item.setIsAlwaysLit(target.isAlwaysLit());
+        item.setIsAutoLit(target.isAutoLit());
+        item.setIsAutoFilled(target.isAutoFilled());
+        item.setIsOwnerMoveable(target.isOwnerTurnable());
+        item.setIsOwnerTurnable(target.isOwnerTurnable());
+        item.setIsNotTurnable(target.isNotTurnable());
+        item.setIsSealedByPlayer(target.isSealedByPlayer());
+        item.setIsNotSpellTarget(target.isNotSpellTarget());
+    }
+
+    /*
     public static void lock(Item target) throws NoSuchTemplateException, FailedException, NoSuchItemException {
         final long oldLockId = target.getLockId();
         if (oldLockId != -10L) {
@@ -168,15 +172,17 @@ public class Initiator implements WurmServerMod, ServerStartedListener, Configur
             DbConnector.returnConnection(dbcon);
         }
     }
-
+*/
     public String getVersion() {
-        return "v1.3"; // updated 3/26/19
+        return "v1.4"; // updated 3/26/19
     }
 
     //TODO
+    // question for multiple copies instead of multiple choice
     // copy locks
     // copy food
     // copy inscriptions
     // copy items inside containers
+    // copy catseye
 
 }
