@@ -1,6 +1,8 @@
 package org.jubaroo.mods.copypaste.actions.copy;
 
+import com.wurmonline.mesh.GrassData;
 import com.wurmonline.mesh.Tiles;
+import com.wurmonline.mesh.TreeData;
 import com.wurmonline.server.behaviours.Action;
 import com.wurmonline.server.behaviours.ActionEntry;
 import com.wurmonline.server.behaviours.Actions;
@@ -8,6 +10,7 @@ import com.wurmonline.server.behaviours.Crops;
 import com.wurmonline.server.creatures.Creature;
 import com.wurmonline.server.items.Item;
 import com.wurmonline.server.items.ItemList;
+import com.wurmonline.server.items.Materials;
 import com.wurmonline.server.players.Player;
 import org.gotti.wurmunlimited.modsupport.actions.ActionPerformer;
 import org.gotti.wurmunlimited.modsupport.actions.ActionPropagation;
@@ -40,9 +43,18 @@ public class CopyTerrainDataPerformer implements ActionPerformer {
 
             final byte data = Tiles.decodeData(tile);
             final byte type = Tiles.decodeType(tile);
-            final int crop = Crops.getCropNumber(type, data);
             final Tiles.Tile theTile = Tiles.getTile(type);
             final String tileName = theTile.getName().toLowerCase();
+            //farm
+            final int crop = Crops.getCropNumber(type, data);
+            final int tileAge = Crops.decodeFieldAge(data);
+            final boolean farmed = Crops.decodeFieldState(data);
+            // tree
+            final TreeData.TreeType treeData = Materials.getTreeTypeForWood(type);
+            // flowers
+            final GrassData.GrowthStage growthStage = GrassData.GrowthStage.decodeTileData(Tiles.decodeData(tile));
+            final GrassData.FlowerType flowerType = GrassData.FlowerType.decodeTileData(data);
+            final byte flowerData = GrassData.encodeGrassTileData(growthStage, flowerType);
 
             if (performer instanceof Player) {
                 if (source.getTemplateId() != ItemList.wandDeity) {
@@ -59,7 +71,21 @@ public class CopyTerrainDataPerformer implements ActionPerformer {
                 // if normal - copy tile data to aux on wand - and also
                 // if farm plot - copy crop, tended and age data
                 // if tree - copy age data
+                // if flower on grass - copy flower type
 
+                source.setAuxData(type);
+
+                if (crop > 0) {
+                // stuff
+                }
+
+                if (Tiles.isTree(type) || Tiles.isBush(type)) {
+                // stuff
+                }
+
+                if (Tiles.isFlower) {
+                // stuff
+                }
 
             } else {
                 Initiator.logWarning(String.format("[WARNING] Somehow a non-player activated action: %s", actionId));

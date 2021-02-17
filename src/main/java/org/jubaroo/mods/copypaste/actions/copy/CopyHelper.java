@@ -139,5 +139,14 @@ public class CopyHelper {
 
     }
 
+    public static void copyFlowerData(int tile) {
+
+    }
+
+    public static boolean isFarmPlot(int tile) {
+
+        return false;
+    }
+
 }
 

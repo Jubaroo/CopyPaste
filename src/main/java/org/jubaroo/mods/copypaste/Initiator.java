@@ -112,7 +112,7 @@ public class Initiator implements WurmServerMod, ServerStartedListener, Configur
 */
 
     public String getVersion() {
-        return "v1.5"; // updated 3/26/19
+        return "v1.5.1"; // updated 3/26/19
     }
 
     //TODO

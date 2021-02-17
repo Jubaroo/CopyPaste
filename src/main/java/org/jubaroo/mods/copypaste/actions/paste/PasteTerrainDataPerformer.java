@@ -1,5 +1,6 @@
 package org.jubaroo.mods.copypaste.actions.paste;
 
+import com.wurmonline.mesh.GrassData;
 import com.wurmonline.mesh.Tiles;
 import com.wurmonline.server.Server;
 import com.wurmonline.server.behaviours.Action;
@@ -39,6 +40,12 @@ public class PasteTerrainDataPerformer implements ActionPerformer {
     @Override
     public boolean action(Action action, Creature performer, Item source, int tilex, int tiley, boolean onSurface, int heightOffset, int tile, short num, float counter) {
         try {
+            final byte data = Tiles.decodeData(tile);
+            final byte type = Tiles.decodeType(tile);
+            final int crop = Crops.getCropNumber(type, data);
+            final Tiles.Tile theTile = Tiles.getTile(type);
+            final String tileName = theTile.getName().toLowerCase();
+
             if (performer instanceof Player) {
 
                 // If not holding a wand, we abort the action
@@ -47,14 +54,18 @@ public class PasteTerrainDataPerformer implements ActionPerformer {
                     return propagate(action, ActionPropagation.FINISH_ACTION, ActionPropagation.NO_SERVER_PROPAGATION, ActionPropagation.NO_ACTION_PERFORMER_PROPAGATION);
                 }
 
-                // Change the aux data of the performers wand to the targeted tile's byte value if not already set to the same type
-                final byte data = Tiles.decodeData(tile);
-                final byte type = Tiles.decodeType(tile);
-                final int crop = Crops.getCropNumber(type, data);
-                final Tiles.Tile theTile = Tiles.getTile(type);
-                final String tileName = theTile.getName().toLowerCase();
+                if (tile > 0) {
+                    Initiator.logWarning(String.format("Something is wrong with the tile and its data is [%s]", type));
+                    return propagate(action, ActionPropagation.FINISH_ACTION, ActionPropagation.NO_SERVER_PROPAGATION, ActionPropagation.NO_ACTION_PERFORMER_PROPAGATION);
+                }
+
+
+
+                //flower
+                Server.setSurfaceTile(tilex, tiley, Tiles.decodeHeight(tile), Tiles.Tile.TILE_GRASS.id, GrassData.encodeGrassTileData(growthStage, GrassData.FlowerType.NONE));
+
+
             } else {
-                // Log a warning about a non player performing the action and terminate the action
                 Initiator.logWarning(String.format("[WARNING] Somehow a non-player activated action: %s", actionId));
             }
             return propagate(action, ActionPropagation.CONTINUE_ACTION, ActionPropagation.NO_SERVER_PROPAGATION, ActionPropagation.NO_ACTION_PERFORMER_PROPAGATION);
