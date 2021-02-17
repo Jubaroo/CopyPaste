@@ -6,24 +6,22 @@ import com.wurmonline.server.items.Item;
 import com.wurmonline.server.players.Player;
 import org.gotti.wurmunlimited.modsupport.actions.BehaviourProvider;
 import org.jubaroo.mods.copypaste.Initiator;
-import org.jubaroo.mods.copypaste.actions.copy.CopyItemPerformer;
 import org.jubaroo.mods.copypaste.actions.copy.CopyMultipleItemPerformer;
+import org.jubaroo.mods.copypaste.actions.copy.CopyTerrainDataPerformer;
 import org.jubaroo.mods.copypaste.actions.paste.CopyPastePerformer;
+import org.jubaroo.mods.copypaste.actions.paste.PasteTerrainDataPerformer;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class CopyMenuProvider implements BehaviourProvider {
+public class CopyTerrainMenuProvider implements BehaviourProvider {
     private final List<ActionEntry> menu;
 
-    public CopyMenuProvider() {
+    public CopyTerrainMenuProvider() {
         menu = new ArrayList<>();
-        menu.add(new CopyItemPerformer().actionEntry);
-        new CopyPastePerformer();
-        menu.add(CopyPastePerformer.actionEntry);
-        new CopyMultipleItemPerformer();
-        menu.add(CopyMultipleItemPerformer.actionEntry);
-        menu.add(0, new ActionEntry((short) (-1 * menu.size()), "GM Copy & Paste", ""));
+        menu.add(new CopyTerrainDataPerformer().actionEntry);
+        menu.add(new PasteTerrainDataPerformer().actionEntry);
+        menu.add(0, new ActionEntry((short) (-1 * menu.size()), "GM Terrain Copy/Paste", ""));
     }
 
     @Override

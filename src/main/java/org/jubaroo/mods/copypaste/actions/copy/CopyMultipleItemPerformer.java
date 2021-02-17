@@ -9,15 +9,15 @@ import com.wurmonline.server.players.Player;
 import org.gotti.wurmunlimited.modsupport.actions.ActionPerformer;
 import org.gotti.wurmunlimited.modsupport.actions.ModActions;
 import org.jubaroo.mods.copypaste.Initiator;
-import org.jubaroo.mods.copypaste.Question.CopyMultipleQuestion;
+import org.jubaroo.mods.copypaste.questions.CopyMultipleQuestion;
 
 public class CopyMultipleItemPerformer implements ActionPerformer {
     private final short actionId;
-    public final ActionEntry actionEntry;
+    public static ActionEntry actionEntry;
 
     public CopyMultipleItemPerformer() {
         actionId = (short) ModActions.getNextActionId();
-        actionEntry = ActionEntry.createEntry(actionId, "Copy item multiple times", "copying", new int[]{
+        actionEntry = ActionEntry.createEntry(actionId, "Copy Multiple Times", "copying", new int[]{
                         Actions.ACTION_TYPE_IGNORERANGE,
                         Actions.ACTION_TYPE_QUICK
                 }
@@ -34,14 +34,14 @@ public class CopyMultipleItemPerformer implements ActionPerformer {
     @Override
     public boolean action(Action act, Creature performer, Item target, short action, float counter) {
         if (performer instanceof Player) {
-            if (!Initiator.canUse(performer, target)) {
-                performer.getCommunicator().sendNormalServerMessage("You cannot copy that right now.");
+            if (CopyHelper.cannotUse(performer, target)) {
+                performer.getCommunicator().sendNormalServerMessage("You cannot copy that.");
                 return true;
             }
             CopyMultipleQuestion.send(performer, target);
             return true;
         } else {
-            Initiator.logWarning("Somehow a non-player activated copy action...");
+            Initiator.logWarning(String.format("[WARNING] Somehow a non-player activated action: %s", actionId));
         }
         return true;
     }

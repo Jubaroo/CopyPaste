@@ -1,15 +1,14 @@
 package org.jubaroo.mods.copypaste;
 
 import com.wurmonline.server.MiscConstants;
-import com.wurmonline.server.creatures.Creature;
-import com.wurmonline.server.items.Item;
 import org.gotti.wurmunlimited.modloader.interfaces.Configurable;
 import org.gotti.wurmunlimited.modloader.interfaces.PreInitable;
 import org.gotti.wurmunlimited.modloader.interfaces.ServerStartedListener;
 import org.gotti.wurmunlimited.modloader.interfaces.WurmServerMod;
 import org.gotti.wurmunlimited.modsupport.actions.ModActions;
 import org.jubaroo.mods.copypaste.actions.CopyMenuProvider;
-import org.jubaroo.mods.copypaste.actions.copy.CopyTileDataAction;
+import org.jubaroo.mods.copypaste.actions.CopyTerrainMenuProvider;
+import org.jubaroo.mods.copypaste.actions.copy.CopyTerrainDataPerformer;
 
 import java.util.Properties;
 import java.util.logging.Level;
@@ -17,32 +16,12 @@ import java.util.logging.Logger;
 
 public class Initiator implements WurmServerMod, ServerStartedListener, Configurable, PreInitable {
     public static final Logger logger = Logger.getLogger(Initiator.class.getName());
-    public static boolean messageOnCopy = true;
-    public static boolean placeLargeItemsOnGround = false;
-    public static double weightLimit = 150.0d;
-    public static int gmPower = 5;
+    public static int gmPower = MiscConstants.POWER_IMPLEMENTOR;
 
     @Override
     public void configure(Properties properties) {
-        Initiator.messageOnCopy = Boolean.parseBoolean(properties.getProperty("messageOnCopy", String.valueOf(Initiator.messageOnCopy)));
-        Initiator.placeLargeItemsOnGround = Boolean.parseBoolean(properties.getProperty("placeItemsOnGround", String.valueOf(Initiator.placeLargeItemsOnGround)));
-        Initiator.weightLimit = Double.parseDouble(properties.getProperty("weightLimit", String.valueOf(Initiator.weightLimit)));
         Initiator.gmPower = Integer.parseInt(properties.getProperty("gmPower", String.valueOf(Initiator.gmPower)));
-        logger.log(Level.INFO, "========================== Copy Items Mod Settings =============================");
-        logInfo(String.format("GM Power Required: %d", Initiator.gmPower));
-        if (Initiator.messageOnCopy) {
-            logInfo("Message To GM On Copy: Enabled");
-        } else {
-            logInfo("Message To GM On Copy: Disabled");
-        }
-        if (Initiator.placeLargeItemsOnGround) {
-            logInfo("Large Items Placed On Ground: Enabled");
-        } else {
-            logInfo("Large Items Placed On Ground: Disabled");
-        }
-        logInfo(String.format("Weight Limit To Copy Items On Ground: %s kilograms", Initiator.weightLimit));
         logInfo(String.format("GM Power Level To Copy Items: %d", Initiator.gmPower));
-        logger.log(Level.INFO, "========================== Copy Items Mod Settings =============================");
     }
 
     @Override
@@ -52,15 +31,13 @@ public class Initiator implements WurmServerMod, ServerStartedListener, Configur
 
     @Override
     public void onServerStarted() {
-        logInfo("onServerStarted called");
         try {
             ModActions.registerBehaviourProvider(new CopyMenuProvider());
-            ModActions.registerAction(new CopyTileDataAction());
+            ModActions.registerBehaviourProvider(new CopyTerrainMenuProvider());
         } catch (IllegalArgumentException | ClassCastException e) {
             e.printStackTrace();
-            logger.log(Level.SEVERE, "Error in onServerStarted()", e);
+            logException("Error in onServerStarted()", e);
         }
-        logInfo("all onServerStarted completed");
     }
 
     public static void logException(String msg, Throwable e) {
@@ -91,46 +68,6 @@ public class Initiator implements WurmServerMod, ServerStartedListener, Configur
             default:
                 return "";
         }
-    }
-
-    public static boolean canUse(Creature performer, Item object) {
-        return performer.isPlayer() && object != null && performer.getPower() >= Initiator.gmPower && performer.getPower() != 0 &&
-                !object.isInventory() && !object.isInventoryGroup() && !object.isTopParentPile() && !object.isBodyPart();
-    }
-
-    public static void copyItemRestrictions(Item item, Item target) {
-        // Copy all item restrictions
-        item.setAuxData(target.getAuxData());
-        item.setData1(target.getData1());
-        item.setData2(target.getData2());
-        item.setExtra1(target.getExtra1());
-        item.setExtra2(target.getExtra2());
-        item.setWeight(target.getWeightGrams(), true);
-        item.setColor(target.getColor());
-        item.setColor2(target.getColor2());
-        item.setName(target.getName());
-        item.setDescription(target.getDescription());
-        item.setHasNoDecay(target.hasNoDecay());
-        item.setIsIndestructible(target.isIndestructible());
-        item.setIsNoPut(target.isNoPut());
-        item.setIsNoTake(target.isNoTake());
-        item.setIsNoMove(target.isNoMove());
-        item.setIsNoImprove(target.isNoImprove());
-        item.setIsNotLockable(target.isNotLockable());
-        item.setIsNoDrop(target.isNoDrop());
-        item.setIsNotPaintable(target.isNotPaintable());
-        item.setIsNotLockpickable(target.isNotLockpickable());
-        item.setIsNoDrag(target.isNoDrag());
-        item.setIsNoRepair(target.isNoRepair());
-        item.setIsNotRuneable(target.isNotRuneable());
-        item.setIsAlwaysLit(target.isAlwaysLit());
-        item.setIsAutoLit(target.isAutoLit());
-        item.setIsAutoFilled(target.isAutoFilled());
-        item.setIsOwnerMoveable(target.isOwnerTurnable());
-        item.setIsOwnerTurnable(target.isOwnerTurnable());
-        item.setIsNotTurnable(target.isNotTurnable());
-        item.setIsSealedByPlayer(target.isSealedByPlayer());
-        item.setIsNotSpellTarget(target.isNotSpellTarget());
     }
 
     /*
@@ -173,16 +110,15 @@ public class Initiator implements WurmServerMod, ServerStartedListener, Configur
         }
     }
 */
+
     public String getVersion() {
-        return "v1.4"; // updated 3/26/19
+        return "v1.5"; // updated 3/26/19
     }
 
     //TODO
-    // question for multiple copies instead of multiple choice
-    // copy locks
+    // message telling that a locked container will not stay locked when copied
     // copy food
     // copy inscriptions
     // copy items inside containers
-    // copy catseye
 
 }

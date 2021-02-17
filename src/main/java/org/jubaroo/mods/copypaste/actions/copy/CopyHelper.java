@@ -1,24 +1,25 @@
 package org.jubaroo.mods.copypaste.actions.copy;
 
 import com.wurmonline.server.FailedException;
-import com.wurmonline.server.NoSuchItemException;
-import com.wurmonline.server.NoSuchPlayerException;
+import com.wurmonline.server.MiscConstants;
+import com.wurmonline.server.behaviours.ActionEntry;
 import com.wurmonline.server.creatures.Creature;
-import com.wurmonline.server.creatures.NoSuchCreatureException;
 import com.wurmonline.server.items.*;
 import com.wurmonline.server.spells.SpellEffect;
-import com.wurmonline.server.zones.NoSuchZoneException;
 import org.jubaroo.mods.copypaste.Initiator;
+import org.jubaroo.mods.copypaste.actions.paste.CopyPastePerformer;
 
 public class CopyHelper {
 
-    static public void copyItem(Creature performer, Item target) throws NoSuchTemplateException, FailedException {
-        Item item;
-        //int temp = target.getTemperature();
-        //float nut = target.getNutritionLevel();
+    public static boolean cannotUse(Creature performer, Item object) {
+        return !performer.isPlayer() || object == null || performer.getPower() < Initiator.gmPower || performer.getPower() == MiscConstants.POWER_NONE ||
+                object.isInventory() || object.isInventoryGroup() || object.isTopParentPile() || object.isBodyPart();
+    }
+
+    public static void copyItemData(Creature performer, Item target, ActionEntry act) throws NoSuchTemplateException, FailedException {
+        Item item = ItemFactory.createItem(target.getTemplateId(), target.getCurrentQualityLevel(), target.getMaterial(), target.getRarity(), target.getCreatorName());
 
         // Copy all item restrictions
-        item = ItemFactory.createItem(target.getTemplateId(), target.getCurrentQualityLevel(), target.getMaterial(), target.getRarity(), target.getCreatorName());
         item.setAuxData(target.getAuxData());
         item.setData1(target.getData1());
         item.setData2(target.getData2());
@@ -50,39 +51,11 @@ public class CopyHelper {
         item.setIsNotTurnable(target.isNotTurnable());
         item.setIsSealedByPlayer(target.isSealedByPlayer());
         item.setIsNotSpellTarget(target.isNotSpellTarget());
-        item.setHasCourier(target.hasCourier());
-        item.setHasDarkMessenger(target.hasDarkMessenger());
         item.savePermissions();
 
         if (target.getTemplate().getTemplateId() == ItemList.catseye) {
             item.setAuxData((byte) 0);
         }
-
-        // Copy lock if applicable
-        //if (target.isLocked()) {
-        //    if (copy != null) {
-        //        Initiator.lock(target);
-        //    }
-        //}
-
-        // Copy nutrition of food
-        //if (target.isFood()) {
-        //    if (copy != null) {
-        //        dbSaveMealData(target, copy);
-        //        //Recipe recipe = Recipes.getRecipeFor(performer.getWurmId(), (byte)0, null, target, true, true);
-        //        //if (recipe != null) {
-        //        //    item.calculateAndSaveNutrition(null, target, recipe);
-        //        //}
-        //    }
-        //}
-
-        // Copy inscriptions
-        //if (item != null) {
-        //    final boolean hasInscription = item.canHaveInscription() && item.getInscription() != null && item.getInscription().hasBeenInscribed();
-        //    if (hasInscription) {
-        //        item.setInscription(Objects.requireNonNull(target.getInscription()).getInscription(), target.getInscription().getInscriber());
-        //    }
-        //}
 
         // Copy blessing if applicable
         if (target.getBless() != null) {
@@ -111,17 +84,60 @@ public class CopyHelper {
             itemSpellEffects.addSpellEffect(newEff);
         }
 
-        // Place item on ground if config is set
-        if (Initiator.placeLargeItemsOnGround && target.getWeightGrams() >= Initiator.weightLimit * 1000) {
-            try {
-                item.putItemInfrontof(performer, 2f);
-            } catch (NoSuchCreatureException | NoSuchItemException | NoSuchPlayerException | NoSuchZoneException e) {
-                e.printStackTrace();
+        //Courier/Dark Messenger
+        item.setHasCourier(target.hasCourier());
+        item.setHasDarkMessenger(target.hasDarkMessenger());
+
+        // Copy lock if applicable
+        //if (target.isLocked()) {
+        //    if (copy != null) {
+        //        Initiator.lock(target);
+        //    }
+        //}
+
+        // Copy nutrition of food
+        //if (target.isFood()) {
+        //    if (copy != null) {
+        //        dbSaveMealData(target, copy);
+        //        //Recipe recipe = Recipes.getRecipeFor(performer.getWurmId(), (byte)0, null, target, true, true);
+        //        //if (recipe != null) {
+        //        //    item.calculateAndSaveNutrition(null, target, recipe);
+        //        //}
+        //    }
+        //}
+
+        // Copy inscriptions
+        //if (item != null) {
+        //    final boolean hasInscription = item.canHaveInscription() && item.getInscription() != null && item.getInscription().hasBeenInscribed();
+        //    if (hasInscription) {
+        //        item.setInscription(Objects.requireNonNull(target.getInscription()).getInscription(), target.getInscription().getInscriber());
+        //    }
+        //}
+
+        if (act == CopyPastePerformer.actionEntry) {
+            // Begin placing the item
+            performer.getInventory().insertItem(item, true, false);
+            performer.getCommunicator().sendPlaceItem(item);
+            performer.setPlacingItem(true);
+
+            // Cancel placing action if no longer placing an item
+            if (!performer.isPlacingItem()) {
+                performer.getCommunicator().sendCancelPlacingItem();
+                performer.setPlacingItem(false, item);
             }
         } else {
-            // Place item in inventory if config set
             performer.getInventory().insertItem(item);
         }
+
+    }
+
+    public static void copyFieldData(int tile) {
+
+    }
+
+    public static void copyTreeData(int tile) {
+
     }
 
 }
+

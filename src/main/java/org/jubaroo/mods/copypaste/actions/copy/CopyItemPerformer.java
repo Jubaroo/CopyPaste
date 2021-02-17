@@ -8,13 +8,9 @@ import com.wurmonline.server.creatures.Creature;
 import com.wurmonline.server.items.Item;
 import com.wurmonline.server.items.NoSuchTemplateException;
 import com.wurmonline.server.players.Player;
-import com.wurmonline.shared.util.MaterialUtilities;
 import org.gotti.wurmunlimited.modsupport.actions.ActionPerformer;
 import org.gotti.wurmunlimited.modsupport.actions.ModActions;
 import org.jubaroo.mods.copypaste.Initiator;
-
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 public class CopyItemPerformer implements ActionPerformer {
     private final short actionId;
@@ -22,7 +18,7 @@ public class CopyItemPerformer implements ActionPerformer {
 
     public CopyItemPerformer() {
         actionId = (short) ModActions.getNextActionId();
-        actionEntry = ActionEntry.createEntry(actionId, "Copy item once", "copying", new int[]{
+        actionEntry = ActionEntry.createEntry(actionId, "Copy Once", "copying", new int[]{
                         Actions.ACTION_TYPE_IGNORERANGE,
                         Actions.ACTION_TYPE_QUICK
                 }
@@ -39,21 +35,17 @@ public class CopyItemPerformer implements ActionPerformer {
     @Override
     public boolean action(Action act, Creature performer, Item target, short action, float counter) {
         if (performer instanceof Player) {
-            if (!Initiator.canUse(performer, target)) {
-                performer.getCommunicator().sendNormalServerMessage("You cannot copy that right now.");
+            if (CopyHelper.cannotUse(performer, target)) {
+                performer.getCommunicator().sendNormalServerMessage("You cannot copy that.");
                 return true;
             }
             try {
-                CopyHelper.copyItem(performer, target);
+                CopyHelper.copyItemData(performer, target, actionEntry);
             } catch (NoSuchTemplateException | FailedException e) {
                 e.printStackTrace();
             }
-            // Optional message when item is copied
-            if (Initiator.messageOnCopy) {
-                performer.getCommunicator().sendNormalServerMessage(String.format("You copy the %s and all it's data. The rarity is: %s, the material is: %s, and the quality is: %s", target.getName(), Initiator.getRarityString(target.getRarity()), MaterialUtilities.getMaterialString(target.getMaterial()), target.getCurrentQualityLevel()));
-            }
         } else {
-            Initiator.logWarning("Somehow a non-player activated copy action...");
+            Initiator.logWarning(String.format("[WARNING] Somehow a non-player activated action: %s", actionId));
         }
         return true;
     }
