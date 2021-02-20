@@ -10,10 +10,6 @@ import com.wurmonline.server.behaviours.Terraforming;
 import com.wurmonline.server.items.Item;
 import com.wurmonline.server.players.Player;
 
-/**
- * Created by Jubaroo on 2/16/2021
- */
-
 public class CustomPaintTerrain {
 
     public static void pasteTerrain(final Player player, final Item wand, final int tileX, final int tileY) {
@@ -50,12 +46,10 @@ public class CustomPaintTerrain {
                         Server.caveMesh.setTile(tileX, tileY, Tiles.encode(Tiles.decodeHeight(Server.caveMesh.getTile(tileX, tileY)), theNewTile.id, Tiles.decodeData(Server.caveMesh.getTile(tileX, tileY))));
                         Players.getInstance().sendChangedTiles(tileX, tileY, 1, 1, false, false);
                     }
-                }
-                else {
+                } else {
                     player.getCommunicator().sendNormalServerMessage("You can only change to solid rock types at the moment.");
                 }
-            }
-            else {
+            } else {
                 player.getCommunicator().sendNormalServerMessage("Only implementors may set the terrain to some sort of rock.");
             }
             return;
@@ -65,8 +59,7 @@ public class CustomPaintTerrain {
                 final byte oldType = Tiles.decodeType(Server.surfaceMesh.getTile(tileX - dx / 2 + x, tileY - dy / 2 + y));
                 if (player.getPower() < 5 && (newtype == Tiles.Tile.TILE_ROCK.id || oldType == Tiles.Tile.TILE_ROCK.id || newtype == Tiles.Tile.TILE_CLIFF.id || oldType == Tiles.Tile.TILE_CLIFF.id)) {
                     player.getCommunicator().sendNormalServerMessage("That would have impact on the rock layer, and is not allowed for now.");
-                }
-                else {
+                } else {
                     final Tiles.Tile theNewTile2 = Tiles.getTile(newtype);
                     byte data = 0;
                     final byte theNewType;
@@ -78,19 +71,17 @@ public class CustomPaintTerrain {
                         }
                     }
                     if (newtype == Tiles.Tile.TILE_ROCK.id) {
-                        Server.caveMesh.setTile(tileX - dx / 2 + x, tileY - dy / 2 + y, Tiles.encode((short)(-100), Tiles.Tile.TILE_CAVE_WALL.id, (byte)0));
-                        Server.rockMesh.setTile(tileX - dx / 2 + x, tileY - dy / 2 + y, Tiles.encode(Tiles.decodeHeight(Server.surfaceMesh.getTile(tileX - dx / 2 + x, tileY - dy / 2 + y)), Tiles.Tile.TILE_ROCK.id, (byte)0));
-                    }
-                    else if (theNewTile2.isTree() || theNewTile2.isBush()) {
-                        final byte treeAge = (byte)Server.rand.nextInt(FoliageAge.values().length);
-                        final byte grass = (byte)(1 + Server.rand.nextInt(3));
+                        Server.caveMesh.setTile(tileX - dx / 2 + x, tileY - dy / 2 + y, Tiles.encode((short) (-100), Tiles.Tile.TILE_CAVE_WALL.id, (byte) 0));
+                        Server.rockMesh.setTile(tileX - dx / 2 + x, tileY - dy / 2 + y, Tiles.encode(Tiles.decodeHeight(Server.surfaceMesh.getTile(tileX - dx / 2 + x, tileY - dy / 2 + y)), Tiles.Tile.TILE_ROCK.id, (byte) 0));
+                    } else if (theNewTile2.isTree() || theNewTile2.isBush()) {
+                        final byte treeAge = (byte) Server.rand.nextInt(FoliageAge.values().length);
+                        final byte grass = (byte) (1 + Server.rand.nextInt(3));
                         data = Tiles.encodeTreeData(treeAge, false, false, grass);
                     }
                     if (Tiles.getTile(aux).id == Tiles.Tile.TILE_ROCK.id) {
-                        Server.caveMesh.setTile(tileX - dx / 2 + x, tileY - dy / 2 + y, Tiles.encode((short)(-100), Tiles.Tile.TILE_CAVE_WALL.id, (byte)0));
-                        Server.rockMesh.setTile(tileX - dx / 2 + x, tileY - dy / 2 + y, Tiles.encode(Tiles.decodeHeight(Server.surfaceMesh.getTile(tileX - dx / 2 + x, tileY - dy / 2 + y)), Tiles.Tile.TILE_ROCK.id, (byte)0));
-                    }
-                    else if (oldType != Tiles.Tile.TILE_HOLE.id && !Tiles.isMineDoor(oldType)) {
+                        Server.caveMesh.setTile(tileX - dx / 2 + x, tileY - dy / 2 + y, Tiles.encode((short) (-100), Tiles.Tile.TILE_CAVE_WALL.id, (byte) 0));
+                        Server.rockMesh.setTile(tileX - dx / 2 + x, tileY - dy / 2 + y, Tiles.encode(Tiles.decodeHeight(Server.surfaceMesh.getTile(tileX - dx / 2 + x, tileY - dy / 2 + y)), Tiles.Tile.TILE_ROCK.id, (byte) 0));
+                    } else if (oldType != Tiles.Tile.TILE_HOLE.id && !Tiles.isMineDoor(oldType)) {
                         Server.setSurfaceTile(tileX - dx / 2 + x, tileY - dy / 2 + y, Tiles.decodeHeight(Server.surfaceMesh.getTile(tileX - dx / 2 + x, tileY - dy / 2 + y)), theNewType, data);
                     }
                 }

@@ -11,12 +11,13 @@ import org.jubaroo.mods.copypaste.actions.paste.CopyPastePerformer;
 
 public class CopyHelper {
 
-    public static boolean cannotUse(Creature performer, Item object) {
-        return !performer.isPlayer() || object == null || performer.getPower() < Initiator.gmPower || performer.getPower() == MiscConstants.POWER_NONE ||
-                object.isInventory() || object.isInventoryGroup() || object.isTopParentPile() || object.isBodyPart();
+    @SuppressWarnings("ConstantConditions")
+    public static boolean canUse(Creature performer, Item object) {
+        return performer.isPlayer() && object != null && performer.getPower() >= Initiator.gmPower ||
+                (!object.isInventory() || !object.isInventoryGroup() || !object.isTopParentPile() || !object.isBodyPart());
     }
 
-    public static void copyItemData(Creature performer, Item target, ActionEntry act) throws NoSuchTemplateException, FailedException {
+    public static void copyItemData(Creature player, Item target, ActionEntry act) throws NoSuchTemplateException, FailedException {
         Item item = ItemFactory.createItem(target.getTemplateId(), target.getCurrentQualityLevel(), target.getMaterial(), target.getRarity(), target.getCreatorName());
 
         // Copy all item restrictions
@@ -51,6 +52,7 @@ public class CopyHelper {
         item.setIsNotTurnable(target.isNotTurnable());
         item.setIsSealedByPlayer(target.isSealedByPlayer());
         item.setIsNotSpellTarget(target.isNotSpellTarget());
+        item.setIsPlanted(target.isPlanted());
         item.savePermissions();
 
         if (target.getTemplate().getTemplateId() == ItemList.catseye) {
@@ -88,23 +90,10 @@ public class CopyHelper {
         item.setHasCourier(target.hasCourier());
         item.setHasDarkMessenger(target.hasDarkMessenger());
 
-        // Copy lock if applicable
-        //if (target.isLocked()) {
-        //    if (copy != null) {
-        //        Initiator.lock(target);
-        //    }
-        //}
-
-        // Copy nutrition of food
-        //if (target.isFood()) {
-        //    if (copy != null) {
-        //        dbSaveMealData(target, copy);
-        //        //Recipe recipe = Recipes.getRecipeFor(performer.getWurmId(), (byte)0, null, target, true, true);
-        //        //if (recipe != null) {
-        //        //    item.calculateAndSaveNutrition(null, target, recipe);
-        //        //}
-        //    }
-        //}
+        // Message to warn target will not copy the lock
+        if (target.isLocked()) {
+            player.getCommunicator().sendNormalServerMessage("Locked items will not copy locks.");
+        }
 
         // Copy inscriptions
         //if (item != null) {
@@ -116,36 +105,19 @@ public class CopyHelper {
 
         if (act == CopyPastePerformer.actionEntry) {
             // Begin placing the item
-            performer.getInventory().insertItem(item, true, false);
-            performer.getCommunicator().sendPlaceItem(item);
-            performer.setPlacingItem(true);
+            player.getInventory().insertItem(item, true, false);
+            player.getCommunicator().sendPlaceItem(item);
+            player.setPlacingItem(true);
 
             // Cancel placing action if no longer placing an item
-            if (!performer.isPlacingItem()) {
-                performer.getCommunicator().sendCancelPlacingItem();
-                performer.setPlacingItem(false, item);
+            if (!player.isPlacingItem()) {
+                player.getCommunicator().sendCancelPlacingItem();
+                player.setPlacingItem(false, item);
             }
         } else {
-            performer.getInventory().insertItem(item);
+            player.getInventory().insertItem(item);
         }
 
-    }
-
-    public static void copyFieldData(int tile) {
-
-    }
-
-    public static void copyTreeData(int tile) {
-
-    }
-
-    public static void copyFlowerData(int tile) {
-
-    }
-
-    public static boolean isFarmPlot(int tile) {
-
-        return false;
     }
 
 }

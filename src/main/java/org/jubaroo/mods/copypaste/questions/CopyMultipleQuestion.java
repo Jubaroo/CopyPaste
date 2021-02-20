@@ -33,12 +33,9 @@ public class CopyMultipleQuestion implements ModQuestion {
     public void answer(Question question, Properties answer) {
         String newSize = answer.getProperty("amount");
 
-        if (newSize.isEmpty()) {
-            performer.getCommunicator().sendNormalServerMessage("The item amount field is blank! Nothing copied.");
-            return;
-        }
-
-        if (!containsIllegalCharacters(newSize, performer)) {
+        if (isIllegalCharacters(newSize)) {
+            performer.getCommunicator().sendNormalServerMessage("The number must not be blank, start with a space or not be a number.");
+        } else {
             int amount = (int) Float.parseFloat(answer.getProperty("amount"));
             for (int i = 0; i < amount; i++) {
                 try {
@@ -54,15 +51,13 @@ public class CopyMultipleQuestion implements ModQuestion {
     }
 
     public static void send(Creature performer, Item renameTarget) {
-        ModQuestions.createQuestion(performer, "Copy Item", "How many times to copy the item?", MiscConstants.NOID, new CopyMultipleQuestion(performer, renameTarget)).sendQuestion();
+        ModQuestions.createQuestion(performer, "Copy Item", "How many copies to make?", MiscConstants.NOID, new CopyMultipleQuestion(performer, renameTarget)).sendQuestion();
     }
 
-    private boolean containsIllegalCharacters(String text, Creature performer) {
-        if (Character.isWhitespace(text.charAt(0))) {
-            performer.getCommunicator().sendNormalServerMessage("The number must not start with a space.");
+    public static boolean isIllegalCharacters(String string) {
+        if (string.matches("^\\s*$")) {
             return true;
-        }
-
-        return false;
+        } else return !string.matches("^[0-9]+$");
     }
+
 }

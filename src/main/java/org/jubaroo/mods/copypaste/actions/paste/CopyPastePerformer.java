@@ -37,7 +37,7 @@ public class CopyPastePerformer implements ActionPerformer {
     @Override
     public boolean action(Action act, Creature performer, Item target, short action, float counter) {
         if (performer instanceof Player) {
-            if (CopyHelper.cannotUse(performer, target)) {
+            if (!CopyHelper.canUse(performer, target)) {
                 performer.getCommunicator().sendNormalServerMessage("You cannot copy that.");
                 return propagate(act, ActionPropagation.FINISH_ACTION, ActionPropagation.NO_SERVER_PROPAGATION, ActionPropagation.NO_ACTION_PERFORMER_PROPAGATION);
             }

@@ -6,6 +6,7 @@ import com.wurmonline.server.items.Item;
 import com.wurmonline.server.players.Player;
 import org.gotti.wurmunlimited.modsupport.actions.BehaviourProvider;
 import org.jubaroo.mods.copypaste.Initiator;
+import org.jubaroo.mods.copypaste.actions.copy.CopyHelper;
 import org.jubaroo.mods.copypaste.actions.copy.CopyItemPerformer;
 import org.jubaroo.mods.copypaste.actions.copy.CopyMultipleItemPerformer;
 import org.jubaroo.mods.copypaste.actions.paste.CopyPastePerformer;
@@ -13,10 +14,10 @@ import org.jubaroo.mods.copypaste.actions.paste.CopyPastePerformer;
 import java.util.ArrayList;
 import java.util.List;
 
-public class CopyMenuProvider implements BehaviourProvider {
+public class ItemMenuProvider implements BehaviourProvider {
     private final List<ActionEntry> menu;
 
-    public CopyMenuProvider() {
+    public ItemMenuProvider() {
         menu = new ArrayList<>();
         menu.add(new CopyItemPerformer().actionEntry);
         new CopyPastePerformer();
@@ -34,7 +35,7 @@ public class CopyMenuProvider implements BehaviourProvider {
     @Override
     public List<ActionEntry> getBehavioursFor(Creature performer, Item object) {
         if (performer instanceof Player) {
-            if (object != null && performer.getPower() >= Initiator.gmPower) {
+            if (CopyHelper.canUse(performer, object)) {
                 return menu;
             }
         }
